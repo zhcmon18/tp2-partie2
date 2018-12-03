@@ -19,6 +19,7 @@ public class GestionnaireClient extends Thread {
 		this.socketCommunication = socketCommunication;
 	}
 
+	//Un thread pour chaque client connecté
 	@Override
 	public void run() {
 
@@ -28,29 +29,31 @@ public class GestionnaireClient extends Thread {
 
 			gererClient();
 
-			fermetureFluxEtSocket();
-
-			interrupt();
-		
+			out.close();
+			in.close();
+			socketCommunication.close();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	void gererClient() {
+	//Gestion de la connexion du client 
+	private void gererClient() {
 		
-		String nomFichier = obtenirNomFichier(getRequete());
+		String nomFichier = obtenirNomFichier(getEntete());
 
 		File fic = obtenirFichier(nomFichier);
 
-		if(fichierExistant(fic)) {
+		if(fic.isFile()) {
 			lireFichierEtEnvoyer(fic);
 			
 		} else {
-			enovyerErreur();
+			enovyerErreur404();
 		}
 	}
 
+	//Lire le contenu du fichier et l’envoyer au client avec l’entête succès
 	private void lireFichierEtEnvoyer(File fic) {
 		String corps = "";
 
@@ -76,7 +79,8 @@ public class GestionnaireClient extends Thread {
 		}
 	}
 
-	private void enovyerErreur() {
+	//Envoyer l'erreur 404 au client
+	private void enovyerErreur404() {
 		String corps = "";
 				corps += "<html>";
 				corps += "<body>";
@@ -95,68 +99,51 @@ public class GestionnaireClient extends Thread {
 			out.print("Content-Type: text/html\r\n\r\n"); // envoie de la ligne vide
 			// envoi de la réponse
 			outPrintEtFlush(corps);
+
+			System.out.println("Erreur 404: le fichier introuvable.");
 	}
 
+	//Obtenir l’entête de la requête 
+	private String getEntete() {
 
-	private String getRequete() {
-
-		String requete = "";
+		String entete = "";
 		String s = "";
-
 		try {
 			// lecture de l'entête http
 			// http est un protocole structuré en lignes
 			while ((s = in.readLine()).compareTo("") != 0) {
-				requete += s + "\r\n";
+				entete += s + "\r\n";
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		System.out.println(requete);
-
-		return requete;
+		return entete;
 	}
 
-	private String obtenirNomFichier(String requete) {
+	//Obtenir le nom du fichier dans l’entête
+	private String obtenirNomFichier(String entete) {
 		
 		String nomFichier = "";
 
-		if(requete != null) {
-			nomFichier = requete.substring(requete.indexOf("/") + 1, requete.indexOf(" HTTP/"));
+		if(entete != null) {
+			nomFichier = entete.substring(entete.indexOf("/") + 1, entete.indexOf(" HTTP/"));
 		} 
 		
 		return nomFichier;
 	}
 	
+	//Obtenir le fichier sur le serveur
 	private File obtenirFichier(String nomFichier) {
 		File fic = new File ("src/siteHTTP/" + nomFichier);
 
 		return fic;
 	}
 
-	private Boolean fichierExistant(File fic) {
-		
-		if(fic.isFile()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
+	//Out print et flush
 	private void outPrintEtFlush (String chaine) {
 		out.print(chaine);
 		out.flush();
-	}
-
-	public void fermetureFluxEtSocket() {
-		try {
-			in.close();
-			out.close();
-			socketCommunication.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }
