@@ -31,6 +31,7 @@ public class GestionnaireClient extends Thread {
 
 			out.close();
 			in.close();
+			
 			socketCommunication.close();
 			
 		} catch (IOException e) {
@@ -85,7 +86,7 @@ public class GestionnaireClient extends Thread {
 				corps += "<html>";
 				corps += "<body>";
 				corps += "<p>";
-				corps += "Erreur 404: le fichier introuvable";
+				corps += "<div style='margin: auto; width: 50%; text-align: center'><h1>Erreur 404: le fichier introuvable<h1></div>";
 				corps += "</p>";
 				corps += "</body>";
 				corps += "</html>";
@@ -117,7 +118,9 @@ public class GestionnaireClient extends Thread {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} catch (NullPointerException e) {
+			System.out.println("La requ\u00EAte vide de Chrome.");
+		} 
 		
 		return entete;
 	}
@@ -127,7 +130,7 @@ public class GestionnaireClient extends Thread {
 		
 		String nomFichier = "";
 
-		if(entete != null) {
+		if(entete != "") {
 			nomFichier = entete.substring(entete.indexOf("/") + 1, entete.indexOf(" HTTP/"));
 		} 
 		
